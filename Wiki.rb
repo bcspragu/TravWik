@@ -2,6 +2,7 @@ require 'nokogiri'
 require 'open-uri'
 
 print "Enter starting url: "
+# Note: url form should be http://en.wikipedia.org/wiki/PAGENAME
 url = gets.chomp
 print "Enter depth: "
 @depth = gets.chomp.to_i
@@ -32,23 +33,35 @@ def get_links(url)
   Hash[links.map {|link| [link,nil]}]
 end
 
-@hash = get_links(url)
+# Initialize our Wiki hash with that page's links
+@wiki = get_links(url)
 
+# Performs a depth-first search of a Wikipedia page's links
+# We maintain a path, which is an array of the steps we
+# took down the @wiki nested hash to reach our current
+# location. 
 def recursive_search(path,current_depth)
+  # If we haven't hit our max depth
   if current_depth < @depth 
-    sub_hash = @hash
+    sub_hash = @wiki
+    # Follow our path down the hash
     path.each do |node|
       sub_hash = sub_hash[node]
     end
 
+    # Expand this node of the sub-tree
     sub_hash.keys.each do |link|
       sub_hash[link] = get_links("http://en.wikipedia.org#{link}")
+      # Here's our magic recursion, add this node to the
+      # path, increment our depth, and traverse that
       recursive_search(path+[link],current_depth+1)
     end
 
   end
 end
 
+# Let's get this thing going
 recursive_search([],1)
 
-p @hash
+# Show our hard work
+p @wiki
